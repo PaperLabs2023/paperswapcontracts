@@ -1,22 +1,32 @@
 // SPDX-License-Identifier: MIT
+
+
+
 pragma solidity ^0.8.9;
+interface IWETH {
+    function totalSupply() external view returns (uint);
 
-interface IAMM {
+    function balanceOf(address account) external view returns (uint);
 
-    function addLiquidity(address _token0, address _token1, uint _amount0,uint _amount1) external  returns (uint shares);
-    function addLiquidityWithETH(address _token, uint _tokenAmount) external  payable;
-    //function swap(address _tokenIn, address _tokenOut, uint _amountIn) external  returns (uint amountOut) ;
+    function transfer(address recipient, uint amount) external returns (bool);
 
-    function removeLiquidity(
-        address _token0,
-        address _token1,
-        uint _shares
-    ) external returns (uint amount0, uint amount1);
+    function allowance(address owner, address spender) external view returns (uint);
 
-    //swap with sli parm _disirSli(parm): 万分之 parm
-    function swapByLimitSli(address _tokenIn, address _tokenOut, uint _amountIn, uint _disirSli) external  returns(uint amountOut);
-    function swapToETH(address _tokenIn, uint _amountIn, uint _disirSli) external ;
-    function swapWithETH(address _tokenOut,uint _disirSli) external  payable;
+    function approve(address spender, uint amount) external returns (bool);
 
-    function getReserve(address _lpTokenAddr, address _tokenAddr) external  view returns(uint);
+    function mint(address account,uint256 amount) external;
+
+    function depositETH() payable external;
+
+    function withdrawETH(uint _amount) external;
+
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint amount
+    ) external returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint amount);
+    event Approval(address indexed owner, address indexed spender, uint amount);
 }
