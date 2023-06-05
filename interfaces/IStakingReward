@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+
+
+
+pragma solidity ^0.8.9;
+
+interface IStakingReward {
+    function initial(uint _amount, uint _duration) external ;
+
+
+    function stake(uint _amount) external ;
+
+    function withdraw(uint _amount) external ;
+
+    function earned(address _account) external  view returns (uint) ;
+
+    function getReward() external;
+    
+}
