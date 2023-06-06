@@ -21,3 +21,13 @@ interface IAMM {
 
     function getReserve(address _lpTokenAddr, address _tokenAddr) external  view returns(uint);
 }
+
+# 新合约地址
+
+### weth：0xD3BEC1c13A49BE9f29c8eE19090181Aec25D1404
+
+### paperswap：0x5d49B0BA0CDe9878ec24F5c01527B2EcAA826613
+
+### Data：0xD96d3141170781eD16379D5EaDa5E452901B7323
+
+### FarmFactory：0x95De4f17fCf3bCeaa6E51c3243507A0F87F58c99
