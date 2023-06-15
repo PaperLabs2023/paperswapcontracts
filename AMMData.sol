@@ -2,6 +2,8 @@
 
 import "./IAMM.sol";
 import "./StableAlgorithm.sol";
+import "./interfaces/ILPToken.sol";
+import "./IERC20.sol";
 
 pragma solidity ^0.8.9;
 
@@ -58,6 +60,23 @@ contract AMMData{
     {
         address lptokenAddr = amm.getLptoken(_tokenA,_tokenB);
         _amountB = amm.getReserve(lptokenAddr,_tokenB) * _amountA / amm.getReserve(lptokenAddr, _tokenA);
+    }
+
+ 
+
+    function getRemoveLiquidityAmount(
+        address _token0,
+        address _token1,
+        uint _shares
+    ) public view  returns (uint amount0, uint amount1) {
+        ILPToken lptoken;//lptoken接口，为了mint 和 burn lptoken
+        address lptokenAddr = amm.getLptoken(_token0,_token1);
+
+        lptoken = ILPToken(lptokenAddr);
+
+
+        amount0 = (_shares * amm.getReserve(lptokenAddr,_token0)) / lptoken.totalSupply();//share * totalsuply/bal0
+        amount1 = (_shares * amm.getReserve(lptokenAddr,_token1)) / lptoken.totalSupply();
     }
 
     
