@@ -20,7 +20,7 @@ contract PaperFinance is IAMM{
     mapping(address => mapping(address => uint)) reserve;//第一个address是lptoken的address ，第2个是相应token的资产，uint是资产的amount
     uint userFee;//fee to pool
     //检索lptoken
-    mapping(address => mapping(address => address)) findLpToken;
+    mapping(address => mapping(address => address)) public findLpToken;
     IWETH immutable WETH;
     address immutable WETHAddr;
     mapping (address => bool) public isStablePair;
@@ -109,7 +109,7 @@ contract PaperFinance is IAMM{
         */
         if (findLpToken[_token1][_token0] != address(0)) {
             lptokenAddr = findLpToken[_token1][_token0];
-            _amount1 = reserve[lptokenAddr][_token1] * _amount0 / reserve[lptokenAddr][_token0];
+            _amount1 = StableAlgorithm.calOutput(100,reserve[lptokenAddr][_token0] + reserve[lptokenAddr][_token1], reserve[lptokenAddr][_token0],_amount0);
 
 
             token1.transferFrom(msg.sender, address(this), _amount1);
