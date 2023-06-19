@@ -24,6 +24,7 @@ contract PaperFinance is IAMM{
     IWETH immutable WETH;
     address immutable WETHAddr;
     mapping (address => bool) public isStablePair;
+    mapping (address=>uint) stablelpParameterA;
 
 
 
@@ -55,6 +56,10 @@ contract PaperFinance is IAMM{
 //管理人员权限
     function setFee(uint fee) external onlyOwner{
         userFee = fee;// dx / 10000
+    }
+
+    function setlpA(address _lpPair, uint _A) public onlyOwner{
+        stablelpParameterA[_lpPair] = _A;
     }
 
 //业务合约
@@ -142,7 +147,7 @@ contract PaperFinance is IAMM{
     }
 
 
-    function addLiquidityWithStablePair(address _token0, address _token1, uint _amount0,uint _amount1) public returns (uint shares) {
+    function addLiquidityWithStablePair(address _token0, address _token1, uint _amount0,uint _amount1) internal returns (uint shares) {
         
         ILPToken lptoken;//lptoken接口，为了mint 和 burn lptoken
         
@@ -188,7 +193,7 @@ contract PaperFinance is IAMM{
         if (findLpToken[_token1][_token0] == address(0)) {
             //当lptoken = 0时，创建lptoken
             shares = _sqrt(_amount0 * _amount1);
-            createPair(_token0,_token1);
+            createStablePair(_token0,_token1);
             lptokenAddr = findLpToken[_token1][_token0];
             lptoken = ILPToken(lptokenAddr);//获取lptoken地址
             pairCreator[lptokenAddr] = msg.sender;
@@ -211,8 +216,13 @@ contract PaperFinance is IAMM{
         _update(lptokenAddr,_token0, _token1, reserve[lptokenAddr][_token0] + _amount0, reserve[lptokenAddr][_token1] + _amount1);
 
     }
-    //移除流动性
 
+    function addLiquidityWithStablePair(address _token0, address _token1, uint _amount0,uint _amount1, uint _A) public 
+    //移除流动性
+    {
+        addLiquidityWithStablePair(_token0, _token1, _amount0, _amount1);
+        setlpA(findLpToken[_token0][_token1], _A);
+    }
     function removeLiquidity(
         address _token0,
         address _token1,
@@ -341,7 +351,7 @@ contract PaperFinance is IAMM{
 
     }
 
-    function swapByStableCoin(address _tokenIn, address _tokenOut, uint _amountIn) public returns(uint amountOut){
+    function swapWithStableCoin(address _tokenIn, address _tokenOut, uint _amountIn) public returns(uint amountOut){
         require(
             findLpToken[_tokenIn][_tokenOut] != address(0),
             "invalid token"
@@ -426,6 +436,26 @@ contract PaperFinance is IAMM{
         return lptokenAddr;
     }
 
+    function createStablePair(address addrToken0, address addrToken1) internal returns(address){
+        bytes32 _salt = keccak256(
+            abi.encodePacked(
+                addrToken0,addrToken1,"stablecoin"
+            )
+        );
+        new LPToken{
+            salt : bytes32(_salt)
+        }
+        ();
+        address lptokenAddr = getAddress(getBytecode(),_salt);
+
+         //检索lptoken
+        lpTokenAddressList.push(lptokenAddr);
+        findLpToken[addrToken0][addrToken1] = lptokenAddr;
+        findLpToken[addrToken1][addrToken0] = lptokenAddr;
+
+        return lptokenAddr;
+    }
+
     function getBytecode() internal pure returns(bytes memory) {
         bytes memory bytecode = type(LPToken).creationCode;
         return bytecode;
@@ -443,6 +473,10 @@ contract PaperFinance is IAMM{
         );
 
         return address(uint160(uint(hash)));
+    }
+
+    function getA(address _lpAddr) public view returns(uint){
+        return stablelpParameterA[_lpAddr];
     }
 
     //数据更新
