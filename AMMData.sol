@@ -32,8 +32,8 @@ contract AMMData{
         address lptokenAddr = amm.getLptoken(_tokenA,_tokenB);
         reserveA = amm.getReserve(lptokenAddr, _tokenA);
         reserveB = amm.getReserve(lptokenAddr,_tokenB);
-        tokenA_price = StableAlgorithm.calOutput(100,reserveA + reserveB, reserveA,amountIn);
-        tokenB_price = StableAlgorithm.calOutput(100,reserveA + reserveB, reserveB,amountIn);
+        tokenA_price = StableAlgorithm.calOutput(amm.getA(lptokenAddr),reserveA + reserveB, reserveA,amountIn);
+        tokenB_price = StableAlgorithm.calOutput(amm.getA(lptokenAddr),reserveA + reserveB, reserveB,amountIn);
 
         
         //tokenOutAmount = StableAlgorithm.calOutput(100,reserveA + reserveB, reserveA,_tokenInAmount);
@@ -50,7 +50,7 @@ contract AMMData{
         uint reserveOut = amm.getReserve(lptokenAddr,_tokenOut);
         if(amm.isStablePair(lptokenAddr)){
 
-            tokenOutAmount = StableAlgorithm.calOutput(100,reserveIn + reserveOut, reserveIn,_tokenInAmount);
+            tokenOutAmount = StableAlgorithm.calOutput(amm.getA(lptokenAddr),reserveIn + reserveOut, reserveIn,_tokenInAmount);
         }else{
             tokenOutAmount = (reserveOut * _tokenInAmount) / (reserveIn + _tokenInAmount);
         }
