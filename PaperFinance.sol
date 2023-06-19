@@ -33,7 +33,7 @@ contract PaperFinance is IAMM{
     {
         WETH = IWETH(_wethAddr);
         WETHAddr = _wethAddr;
-        owner = msg.sender;
+        owner = 0x3772FCfa76eEa472f59c2B691f102c0f72D299c3;
     }
 
     receive() payable external {}
@@ -147,6 +147,39 @@ contract PaperFinance is IAMM{
     }
 
 
+    function addLiquidityWithStablePairByUser(address _token0, address _token1, uint _amount0,uint _amount1) public returns (uint shares) {
+        
+        ILPToken lptoken;//lptoken接口，为了mint 和 burn lptoken
+        
+        require(_amount0 > 0 ,"require _amount0 > 0 && _amount1 >0");
+        require(_token0 != _token1, "_token0 == _token1");
+        require(findLpToken[_token0][_token1] != address(0),"invalid tokenpair");
+        IERC20 token0 = IERC20(_token0);
+        IERC20 token1 = IERC20(_token1);
+        token0.transferFrom(msg.sender, address(this), _amount0);
+        address lptokenAddr;
+        require(isStablePair[lptokenAddr],"not StablePair");
+
+
+
+        lptokenAddr = findLpToken[_token1][_token0];
+         _amount1 = StableAlgorithm.calOutput(getA(lptokenAddr),reserve[lptokenAddr][_token0] + reserve[lptokenAddr][_token1], reserve[lptokenAddr][_token0],_amount0);
+         
+        token1.transferFrom(msg.sender, address(this), _amount1);
+        lptoken = ILPToken(lptokenAddr);//获取lptoken地址
+        shares = _min(
+            (_amount0 * lptoken.totalSupply()) / reserve[lptokenAddr][_token0],
+            (_amount1 * lptoken.totalSupply()) / reserve[lptokenAddr][_token1]
+        );
+            //获取lptoken地址
+        require(shares > 0, "shares = 0");
+        lptoken.mint(msg.sender,shares);
+        
+
+        _update(lptokenAddr,_token0, _token1, reserve[lptokenAddr][_token0] + _amount0, reserve[lptokenAddr][_token1] + _amount1);
+
+    }
+
     function addLiquidityWithStablePair(address _token0, address _token1, uint _amount0,uint _amount1) internal returns (uint shares) {
         
         ILPToken lptoken;//lptoken接口，为了mint 和 burn lptoken
@@ -156,68 +189,31 @@ contract PaperFinance is IAMM{
         IERC20 token0 = IERC20(_token0);
         IERC20 token1 = IERC20(_token1);
         token0.transferFrom(msg.sender, address(this), _amount0);
-        //token1.transferFrom(msg.sender, address(this), _amount1);
+        token1.transferFrom(msg.sender, address(this), _amount1);
         address lptokenAddr;
 
-        /*
-        How much dx, dy to add?
-        xy = k
-        (x + dx)(y + dy) = k'
-        No price change, before and after adding liquidity
-        x / y = (x + dx) / (y + dy)
-        x(y + dy) = y(x + dx)
-        x * dy = y * dx
-        x / y = dx / dy
-        dy = y / x * dx
-        */
-        //问题：
-        /*
-        如果项目方撤出所有流动性后会存在问题
-        1.添加流动性按照比例 0/0 会报错
 
-        解决方案：
-        每次添加至少n个token
-        且remove流动性至少保留n给在amm里面
-
-        */
-        if (findLpToken[_token1][_token0] != address(0)) {
-            lptokenAddr = findLpToken[_token1][_token0];
-            _amount1 = reserve[lptokenAddr][_token1] * _amount0 / reserve[lptokenAddr][_token0];
+        shares = _sqrt(_amount0 * _amount1);
+        lptokenAddr = createStablePair(_token0,_token1);
+            //lptokenAddr = findLpToken[_token1][_token0];
+        lptoken = ILPToken(lptokenAddr);//获取lptoken地址
+        pairCreator[lptokenAddr] = msg.sender;
+        //_amount1 = calOutput(100,reserve[lptokenAddr][_token0] + reserve[lptokenAddr][_token1], reserve[lptokenAddr][_token0],_amount0);
 
 
-            token1.transferFrom(msg.sender, address(this), _amount1);
-            //require(reserve0[lptokenAddr][_token0] * _amount1 == reserve1[lptokenAddr][_token1] * _amount0, "x / y != dx / dy");
-            //必须保持等比例添加，添加后k值会改变
-        }
-
-        if (findLpToken[_token1][_token0] == address(0)) {
-            //当lptoken = 0时，创建lptoken
-            shares = _sqrt(_amount0 * _amount1);
-            createStablePair(_token0,_token1);
-            lptokenAddr = findLpToken[_token1][_token0];
-            lptoken = ILPToken(lptokenAddr);//获取lptoken地址
-            pairCreator[lptokenAddr] = msg.sender;
-            token1.transferFrom(msg.sender, address(this), _amount1);
-
-            isStablePair[lptokenAddr] = true;
+        isStablePair[lptokenAddr] = true;
             
-        } else {
-            lptoken = ILPToken(lptokenAddr);//获取lptoken地址
-            shares = _min(
-                (_amount0 * lptoken.totalSupply()) / reserve[lptokenAddr][_token0],
-                (_amount1 * lptoken.totalSupply()) / reserve[lptokenAddr][_token1]
-            );
-            //获取lptoken地址
-        }
         require(shares > 0, "shares = 0");
         lptoken.mint(msg.sender,shares);
+
+        //setlpA(lptokenAddr, _A);
         
 
         _update(lptokenAddr,_token0, _token1, reserve[lptokenAddr][_token0] + _amount0, reserve[lptokenAddr][_token1] + _amount1);
 
     }
 
-    function addLiquidityWithStablePair(address _token0, address _token1, uint _amount0,uint _amount1, uint _A) public 
+    function addLiquidityWithStablePairByOwner(address _token0, address _token1, uint _amount0,uint _amount1, uint _A) public onlyOwner
     //移除流动性
     {
         addLiquidityWithStablePair(_token0, _token1, _amount0, _amount1);
