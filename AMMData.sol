@@ -15,6 +15,11 @@ contract AMMData{
         amm = IAMM(_amm);
 
     }
+
+    function resetAmm(address _amm) public {
+        amm = IAMM(_amm);
+    }
+
     function getTokenPrice(address _tokenA, address _tokenB) public view returns(uint reserveA,uint reserveB, uint one_tokenA_price,uint one_tokenB_price)
     {
         address lptokenAddr = amm.getLptoken(_tokenA,_tokenB);
