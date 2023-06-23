@@ -25,6 +25,7 @@ contract PaperFinance is IAMM{
     address  WETHAddr;
     mapping (address => bool) public isStablePair;
     mapping (address=>uint) stablelpParameterA;
+    mapping (address => address[2]) public lpInfo;
 
 
 
@@ -130,8 +131,10 @@ contract PaperFinance is IAMM{
             lptokenAddr = findLpToken[_token1][_token0];
             lptoken = ILPToken(lptokenAddr);//获取lptoken地址
             pairCreator[lptokenAddr] = msg.sender;
+
             token0.transferFrom(msg.sender, address(this), _amount0);
             token1.transferFrom(msg.sender, address(this), _amount1);
+
             
         } else {
             lptokenAddr = findLpToken[_token1][_token0];
@@ -435,6 +438,8 @@ contract PaperFinance is IAMM{
         lpTokenAddressList.push(lptokenAddr);
         findLpToken[addrToken0][addrToken1] = lptokenAddr;
         findLpToken[addrToken1][addrToken0] = lptokenAddr;
+
+        lpInfo[lptokenAddr] = [addrToken0,addrToken1];
 
         return lptokenAddr;
     }
